@@ -43,7 +43,7 @@ export class GroupController {
     @Param('groupId') groupId: string,
     @Res() response: Response,
     @Body() data: UpdateGroupDTO,
-  ) {
+  ): Promise<Response<GroupDTO>> {
     const updatedGroup = await this.groupServices.updateGroup(data, groupId);
 
     return response.json(updatedGroup);
