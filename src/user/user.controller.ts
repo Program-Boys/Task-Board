@@ -11,7 +11,7 @@ import {
   Query,
   Param,
 } from '@nestjs/common';
-import { Request, Response, response } from 'express';
+import { Request, Response } from 'express';
 import { UserDTO, UserUpdateDTO } from './dto/user.dto';
 import { UserService } from './user.service';
 import {

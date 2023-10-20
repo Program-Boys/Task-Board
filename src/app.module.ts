@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { TaskModule } from './tasks/task.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { GroupModule } from './group/group.module';
+import { LoggerMiddleware } from './logger/logger.middleware';
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
     PrismaModule,
     UserModule,
     TaskModule,
+    GroupModule,
     AuthModule,
   ],
   providers: [
@@ -35,4 +38,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}
