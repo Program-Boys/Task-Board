@@ -11,15 +11,14 @@ import {
 } from 'class-validator';
 import { TaskState } from '@prisma/client';
 import { Transform } from 'class-transformer';
+import { OmitType } from '@nestjs/swagger';
 
 export class TaskDTO {
-  @IsNotEmpty()
   @IsString()
   @MinLength(1)
   @MaxLength(250)
   title: string;
 
-  @IsNotEmpty()
   @IsString()
   @MinLength(1)
   @MaxLength(500)
@@ -29,8 +28,8 @@ export class TaskDTO {
   @IsEnum(TaskState, { each: true })
   progress?: TaskState;
 
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
   @Min(1)
   @Max(2000)
   @Transform((a: any) => (a.value === '' ? undefined : +a.value))
@@ -60,4 +59,15 @@ export class UpdateTaskDTO {
   @IsOptional()
   @IsEnum(TaskState, { each: true })
   progress?: TaskState;
+}
+
+export class FiltersTask extends OmitType(TaskDTO, ['description', 'title']) {}
+
+export class PaginationDTO {
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  nextPageToken?: string;
+
+  rows?: TaskDTO[];
 }
