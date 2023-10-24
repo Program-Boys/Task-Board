@@ -1,6 +1,11 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { TaskDTO, UpdateTaskDTO } from './dto/tasks.dto';
+import {
+  FiltersTask,
+  PaginationDTO,
+  TaskDTO,
+  UpdateTaskDTO,
+} from './dto/tasks.dto';
 import { Prisma, TaskState } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
@@ -13,7 +18,11 @@ export class TasksService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async createTask(userId: string, taskData: TaskDTO): Promise<TaskDTO> {
+  async createTask(
+    userId: string,
+    groupId: string,
+    taskData: TaskDTO,
+  ): Promise<TaskDTO> {
     const data: Prisma.TaskCreateInput = {
       id: randomUUID(),
       title: taskData.title,
@@ -25,6 +34,11 @@ export class TasksService {
         },
       },
       progress: taskData.progress,
+      group: {
+        connect: {
+          id: groupId,
+        },
+      },
     };
 
     const task = await this.prisma.task.create({
@@ -34,7 +48,10 @@ export class TasksService {
     return task;
   }
 
-  async listUserTasks(userId: string, filters: TaskDTO): Promise<TaskDTO[]> {
+  async listUserTasks(
+    userId: string,
+    filters: FiltersTask,
+  ): Promise<PaginationDTO> {
     const validate = Object.keys(TaskState).includes(filters.progress);
     let offset: number = 0;
     let nextPageToken: string | null = null;
@@ -57,6 +74,9 @@ export class TasksService {
           progress: validate ? filters.progress : undefined,
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
     if (tasks.length > ipp) {
@@ -68,7 +88,12 @@ export class TasksService {
       tasks.pop();
     }
 
-    return tasks;
+    const mappedTask = {
+      nextPageToken: nextPageToken,
+      rows: tasks,
+    };
+
+    return mappedTask;
   }
 
   async updateTaskState(state: TaskState, taskId: string): Promise<TaskDTO> {
@@ -117,7 +142,11 @@ export class TasksService {
   }
 
   private encodeNextPageToken(options: INextPageToken) {
-    return this.jwtService.sign(options);
+    const token = this.jwtService.sign(options, {
+      privateKey: process.env.JWT_PAGINATION,
+    });
+
+    return token;
   }
 
   private decodeNextPageToken(nextPageToken: string) {
