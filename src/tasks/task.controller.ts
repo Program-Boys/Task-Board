@@ -14,7 +14,12 @@ import {
 } from '@nestjs/common';
 import { TasksService } from './task.service';
 import { Request, Response, response } from 'express';
-import { TaskDTO, UpdateTaskDTO } from './dto/tasks.dto';
+import {
+  FiltersTask,
+  PaginationDTO,
+  TaskDTO,
+  UpdateTaskDTO,
+} from './dto/tasks.dto';
 import { TaskState, User } from '@prisma/client';
 
 @Controller('tasks')
@@ -26,11 +31,12 @@ export class TaskController {
   async createTask(
     @Req() request: Request,
     @Res() response: Response,
+    @Query('groupId') groupId: string,
     @Body() taskData: TaskDTO,
   ): Promise<Response<TaskDTO>> {
     const { id } = request.user as User;
 
-    const task = await this.taskService.createTask(id, taskData);
+    const task = await this.taskService.createTask(id, groupId, taskData);
 
     return response.json(task);
   }
@@ -38,10 +44,10 @@ export class TaskController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async listUserTasks(
-    @Query() filters: TaskDTO,
+    @Query() filters: FiltersTask,
     @Req() request: Request,
     @Res() response: Response,
-  ): Promise<Response<TaskDTO[]>> {
+  ): Promise<Response<PaginationDTO>> {
     const { id } = request.user as User;
 
     const userTasks = await this.taskService.listUserTasks(id, filters);
