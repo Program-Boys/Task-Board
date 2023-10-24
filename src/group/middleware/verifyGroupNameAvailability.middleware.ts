@@ -21,10 +21,8 @@ export class VerifyGroupNameAvailability implements NestMiddleware {
       },
     });
 
-    if (!group) {
-      next();
-    }
+    if (group) throw new HttpException(GROUP_ALREADY_EXISTS, 400);
 
-    throw new HttpException(GROUP_ALREADY_EXISTS, 400);
+    next();
   }
 }
