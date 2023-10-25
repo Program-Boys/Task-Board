@@ -27,39 +27,43 @@ export class GroupService {
   async addingTaskInGroup(filters: AddingFilters): Promise<GroupDTO> {
     const { groupId, taskId } = filters;
 
-    const group = await this.prisma.groupTask.findFirst({
-      where: {
-        id: groupId,
-      },
-    });
+    return await this.prisma.$transaction(
+      async (prismaTx: Prisma.TransactionClient) => {
+        const group = await prismaTx.groupTask.findFirst({
+          where: {
+            id: groupId,
+          },
+        });
 
-    if (!group) throw new HttpException(GROUP_NOT_FOUND, 404);
+        if (!group) throw new HttpException(GROUP_NOT_FOUND, 404);
 
-    const task = await this.prisma.task.findFirst({
-      where: {
-        id: taskId,
-      },
-    });
-
-    if (!task) throw new HttpException(TASK_NOT_FOUND, 404);
-
-    const updateGroup = await this.prisma.groupTask.update({
-      where: {
-        id: group.id,
-      },
-      data: {
-        tasks: {
-          connect: {
+        const task = await prismaTx.task.findFirst({
+          where: {
             id: taskId,
           },
-        },
-      },
-      include: {
-        tasks: true,
-      },
-    });
+        });
 
-    return updateGroup;
+        if (!task) throw new HttpException(TASK_NOT_FOUND, 404);
+
+        const updateGroup = await prismaTx.groupTask.update({
+          where: {
+            id: group.id,
+          },
+          data: {
+            tasks: {
+              connect: {
+                id: taskId,
+              },
+            },
+          },
+          include: {
+            tasks: true,
+          },
+        });
+
+        return updateGroup;
+      },
+    );
   }
 
   async listGroups(): Promise<GroupDTO[]> {
