@@ -8,9 +8,10 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Res,
 } from '@nestjs/common';
-import { GroupDTO, UpdateGroupDTO } from './dto/group.dto';
+import { AddingFilters, GroupDTO, UpdateGroupDTO } from './dto/group.dto';
 import { Response, response } from 'express';
 import { GroupService } from './group.service';
 
@@ -27,6 +28,17 @@ export class GroupController {
     const createdGroup = await this.groupServices.createGroup(data);
 
     return response.json(createdGroup);
+  }
+
+  @Post('/addingTask')
+  @HttpCode(HttpStatus.OK)
+  async addingTaskInGroup(
+    @Query() filters: AddingFilters,
+    @Res() response: Response,
+  ): Promise<Response<GroupDTO>> {
+    const addition = await this.groupServices.addingTaskInGroup(filters);
+
+    return response.json(addition);
   }
 
   @Get()
